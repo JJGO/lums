@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+from flask import Flask, jsonify
+from flask import make_response
+
+# import argparse
+import yaml
+
+from lums.gpu import GPUQuery
+
+q = GPUQuery.instance()
+app = Flask(__name__)
+
+@app.route('/gpu', methods=['GET'])
+def query_gpus():
+    # import random, time
+    # time.sleep(random.randint(0,5))
+    return jsonify(q.run())
+
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'Not found'}), 404)
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", debug=False, port=42007)
