@@ -10,6 +10,6 @@ class HTTPQuery:
     def run(self):
         try:
             r = requests.get(self.url, timeout=2)
-            return json.loads(r.text)
+            return r.json()
         except requests.exceptions.ReadTimeout:
             return {}

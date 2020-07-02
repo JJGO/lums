@@ -48,7 +48,7 @@ class GPUQuery:
                 "temperature": gpu['temperature']['gpu_temp'],
                 "model": gpu['product_name'],
                 "processes": gpu['processes'],
-                "n_procs": len(gpu['processes']),
+                "n_proc": len(gpu['processes']),
             })
         return gpus
 

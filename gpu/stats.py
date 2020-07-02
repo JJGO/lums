@@ -1,16 +1,17 @@
 import pandas as pd
 
-def gpu_summary(query):
+def gpu_summary(query, merge=False):
+    if merge:
+        return merge_summaries({k: gpu_summary(v) for k, v in query.items()})
     data = []
     for i, gpu in enumerate(query):
         data.append({'gpu': str(i), **gpu})
         del data[-1]['processes']
     return pd.DataFrame(data)
 
-def proc_summary(query):
-    # if isinstance(queries, list):
-    #     queries = {'localhost': queries}
-
+def proc_summary(query, merge=False):
+    if merge:
+        return merge_summaries({k: proc_summary(v) for k, v in query.items()})
     data = []
     for i, gpu in enumerate(query):
         for p in gpu['processes']:
@@ -19,7 +20,9 @@ def proc_summary(query):
 
 
 
-def gpu_proc_summary(query):
+def gpu_proc_summary(query, merge=False):
+    if merge:
+        return merge_summaries({k: gpu_proc_summary(v) for k, v in query.items()})
     gpus = gpu_summary(query)
     procs = proc_summary(query)
     if len(procs) == 0:
