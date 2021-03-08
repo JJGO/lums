@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Run with
+# uvicorn lums.server:app --host 0.0.0.0 --port PORT 
 
 import logging
 from typing import List
