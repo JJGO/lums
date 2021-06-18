@@ -1,7 +1,6 @@
 from typing import Tuple, List
 import psutil
 
-from pynvml.smi import nvidia_smi
 
 from .schema import GPU, Process
 from ..util.lru import LRUDict
@@ -11,6 +10,7 @@ from ..util.singleton import Singleton
 @Singleton
 class GPUQuery:
     def __init__(self, cache: int = 256, maxduration: int = 86400):
+        from pynvml.smi import nvidia_smi
         self.nv = nvidia_smi()
         self.gpu_count = self.nv.DeviceQuery()["count"]
         # Cache is purged after size limit or time limit
