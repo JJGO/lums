@@ -4,7 +4,7 @@ from typing import List, Tuple
 import psutil
 from pydantic import BaseModel
 
-from .helpers import LRUDict, Singleton
+from helpers import LRUDict, Singleton
 
 # All flags are under pynvml.smi.NVSMI_QUERY_GPU (very unintuitive names)
 QUERY = "memory.free, memory.total, memory.used, utilization.memory, utilization.gpu, temperature.gpu, compute-apps, count, gpu_name"

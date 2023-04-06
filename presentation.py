@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Union
 
 import pandas as pd
 
-from .gpu import GPU, Error
+from gpu import GPU, Error
 
 last_contact = {}
 

@@ -14,16 +14,12 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseSettings
 
-from lums.gpu import GPU, Error, GPUQuery
-from lums.presentation import website_state
+from gpu import GPU, Error, GPUQuery
+from presentation import website_state
 
-# PORT = os.environ['GPU_PORT']
-# DOMAIN = os.environ['DOMAIN']
-# SERVERS = os.environ['SERVERS'].split(',')
-
-PORT = 42006
-DOMAIN = "csail.mit.edu"
-SERVERS = ["oreo", "mars", "twix", "milo", "ahoy"]
+PORT = os.environ["GPU_PORT"]
+DOMAIN = os.environ["DOMAIN"]
+SERVERS = os.environ["SERVERS"].split(",")
 
 
 class Settings(BaseSettings):
