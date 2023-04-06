@@ -1,13 +1,32 @@
-from typing import Tuple, List
+from enum import Enum
+from typing import List, Tuple
+
 import psutil
+from pydantic import BaseModel
 
-
-from .schema import GPU, Process
-from ..util.lru import LRUDict
-from ..util.singleton import Singleton
+from .helpers import LRUDict, Singleton
 
 # All flags are under pynvml.smi.NVSMI_QUERY_GPU (very unintuitive names)
 QUERY = "memory.free, memory.total, memory.used, utilization.memory, utilization.gpu, temperature.gpu, compute-apps, count, gpu_name"
+
+
+class Process(BaseModel):
+    pid: int
+    unit: str
+    used_memory: int
+    userid: str
+    createtime: int
+
+
+class GPU(BaseModel):
+
+    memory_free: int
+    memory_total: int
+    memory_used: int
+    model: str
+    utilization: float
+    temperature: int
+    processes: List[Process]
 
 
 @Singleton
@@ -56,3 +75,8 @@ class GPUQuery:
                 )
             )
         return gpus
+
+
+class Error(str, Enum):
+    TIMEOUT = "timeout error"
+    CONNECT = "connection error"

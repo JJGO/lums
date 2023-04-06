@@ -1,22 +1,24 @@
-'''A simple implementation of a LRU dict that supports discarding by maximum
-capacity and by maximum time not being used.'''
+"""A simple implementation of a LRU dict that supports discarding by maximum
+capacity and by maximum time not being used."""
 
-from collections import OrderedDict
 import time
+from collections import OrderedDict
+
 
 class LRUDict(OrderedDict):
-    '''An dict that can discard least-recently-used items, either by maximum capacity
+    """An dict that can discard least-recently-used items, either by maximum capacity
     or by time to live.
     An item's ttl is refreshed (aka the item is considered "used") by direct access
     via [] or get() only, not via iterating over the whole collection with items()
     for example.
     Expired entries only get purged after insertions or changes. Either call purge()
     manually or check an item's ttl with ttl() if that's unacceptable.
-    '''
+    """
+
     def __init__(self, *args, maxduration=None, maxsize=128, **kwargs):
-        '''Same arguments as OrderedDict with these 2 additions:
+        """Same arguments as OrderedDict with these 2 additions:
         maxduration: number of seconds entries are kept. 0 or None means no timelimit.
-        maxsize: maximum number of entries being kept.'''
+        maxsize: maximum number of entries being kept."""
         super().__init__(*args, **kwargs)
         self.maxduration = maxduration
         self.maxsize = maxsize
@@ -57,10 +59,10 @@ class LRUDict(OrderedDict):
             return default
 
     def ttl(self, key):
-        '''Returns the number of seconds this item will live.
+        """Returns the number of seconds this item will live.
         The item might still be deleted if maxsize is reached.
         The time to live can be negative, as for expired items
-        that have not been purged yet.'''
+        that have not been purged yet."""
         if self.maxduration:
             lru = super().__getitem__(key)[1]
             return self.maxduration - (time.time() - lru)
@@ -78,27 +80,40 @@ class LRUDict(OrderedDict):
         return (v for v, _ in super().values())
 
 
-def main():
-    dct = LRUDict(maxduration=2)
-    print(dct)  # empty
-    dct["a"] = 5
-    time.sleep(1)
-    print(dct)  # a
-    dct["b"] = 10
-    time.sleep(1.5)
-    print(dct)  # a, b
-    dct["c"] = 20
-    print(dct)  # b, c
-    print(dct.get("a"))
-    print(dct["b"])
-    print(dct["c"])
-    time.sleep(1)
-    dct.purge()
-    print(dct)  # c
-    for k, v in dct.items():
-        print("k:%s, v:%s" % (k, v))
-    for v in dct.values():
-        print("v:%s" % (v, ))
+class Singleton:
+    """
+    A non-thread-safe helper class to ease implementing singletons.
+    This should be used as a decorator -- not a metaclass -- to the
+    class that should be a singleton.
 
-if __name__ == "__main__":
-    main()
+    The decorated class can define one `__init__` function that
+    takes only the `self` argument. Also, the decorated class cannot be
+    inherited from. Other than that, there are no restrictions that apply
+    to the decorated class.
+
+    To get the singleton instance, use the `instance` method. Trying
+    to use `__call__` will result in a `TypeError` being raised.
+
+    """
+
+    def __init__(self, decorated):
+        self._decorated = decorated
+
+    def instance(self):
+        """
+        Returns the singleton instance. Upon its first call, it creates a
+        new instance of the decorated class and calls its `__init__` method.
+        On all subsequent calls, the already created instance is returned.
+
+        """
+        try:
+            return self._instance
+        except AttributeError:
+            self._instance = self._decorated()
+            return self._instance
+
+    def __call__(self):
+        raise TypeError("Singletons must be accessed through `instance()`.")
+
+    def __instancecheck__(self, inst):
+        return isinstance(inst, self._decorated)

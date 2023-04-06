@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>DDIG Monitor</title>
+  <!-- <link rel="shortcut icon" href="/gpus/static/favicon.ico"> -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <style>
+    .progress {
+      margin: .5em;
+      height: 2em;
+    }
+
+    .progress-bar {
+      color: black;
+    }
+
+    .bg-danger {
+      color: white;
+    }
+
+    th {
+      text-align: center;
+    }
+
+    .table th{
+        border-top: None;
+    }
+
+    .table td {
+      border-top: None;
+      padding: .2em .75em;
+    }
+
+    @media (prefers-color-scheme: dark) {
+
+        body {
+            background-color: #303030;
+            color: #ddd
+        }
+
+        .progress {
+            background-color: #404040;
+        }
+
+        .progress-bar {
+            color: #ddd;
+        }
+
+        .bg-warning, .bg-danger {
+            color: black;
+        }
+
+        .table {
+            color: #ddd;
+        }
+
+
+
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+    <div class="container">
+      <a class="navbar-brand" href="#">DDIG Monitor</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <!-- <li class="nav-item active">
+            <a class="nav-link" href="#">Home
+              <span class="sr-only">(current)</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">About</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Services</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">Contact</a>
+          </li> -->
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+
+
+
+
+  <!-- Page Content -->
+  <div class="container">
+
+    <div style='margin:2em'>
+    </div>
+
+    {% for host, host_state in state.items() %}
+    <div class="row">
+
+      <div class="col-md-6 text-center">
+          {% set short_host = host.split('.')[0] %}
+          {% set status = host_state['status']%}
+          {% if status == 'Up' %}
+              <h2> {{ host }} </h2>
+          {% elif status == 'Timeout' %}
+              <h2> {{ host }} <small> ⚠️ </small> </h2>
+              <p> {{ host }} is timing out. Last contact {{ host_state['last_contact'] }}</p>
+          {% elif status == 'Down' %}
+              <h2> {{ host }} <small> ❌ </small> </h2>
+              <p> {{ host }} is disconnected. Last contact {{ host_state['last_contact'] }}</p>
+          {% else %}
+              <h2> {{ host }} <small> Invalid state {{ status }} </small> </h2>
+          {% endif %}
+
+          <table style="width: 100%; margin:auto">
+          {% for gpu in host_state['gpus'] %}
+
+              {% set g = loop.index-1 %}
+
+              <tr>
+
+              <td style="width:50%">
+                 <div class="progress" title="Utilization">
+                   <div class="progress-bar {{ gpu['utilization_style'] }} progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="{{ gpu['utilization'] }}"
+                   aria-valuemin="0" aria-valuemax="100" style="width:{{ gpu['utilization'] }}%">
+                   <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
+                    {{ gpu['utilization'] }}% ({{ gpu['n_procs']}})
+                    </span>
+                   </div>
+                 </div>
+              </td>
+
+              <td style="width:50%">
+                 <div class="progress" title="Memory">
+                   <div class="progress-bar {{ gpu['memory_style'] }} progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="{{ mem_percent }}"
+                   aria-valuemin="0" aria-valuemax="100" style="width:{{ gpu['mem_percent'] }}%">
+                   <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
+                    {{ (gpu['memory_used'] / 1024) | round(1) }} / {{ (gpu['memory_total'] / 1024) | round(1) }} GB
+                    </span>
+                   </div>
+                 </div>
+              </td>
+
+              </tr>
+
+          {% endfor %}
+          </table>
+
+      </div>
+
+      <div class="col-md-6 text-center">
+
+      {{ host_state['proc_summary'] | safe }}
+
+      </div>
+
+    </div>
+
+    <div style='margin:2em'>
+    </div>
+
+    {% endfor %}
+
+    <div class="row">
+    </div>
+  </div>
+
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
+  <script>
+  {% if refresh > 0 %}
+  setTimeout(function(){ location.reload(); }, {{ refresh * 1000 }} );
+  {% endif %}
+  </script>
+
+</body>
+
+</html>

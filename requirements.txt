@@ -1,0 +1,7 @@
+aiohttp
+fastapi
+jinja2
+pynvml
+uvicorn
+psutil
+pandas

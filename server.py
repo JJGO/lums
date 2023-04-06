@@ -1,17 +1,29 @@
-#!/usr/bin/env python
 # Run with
-# uvicorn lums.server:app --host 0.0.0.0 --port PORT 
+# uvicorn lums.server:app --host 0.0.0.0 --port PORT
 
+import asyncio
+import json
 import logging
-from typing import List
+import os
+from typing import Dict, List, Optional, Union
 
-from fastapi import FastAPI
+import aiohttp
+from aiohttp import client_exceptions
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseSettings
 
-from rich.traceback import install
+from lums.gpu import GPU, Error, GPUQuery
+from lums.presentation import website_state
 
-from lums.gpu import GPUQuery
-from lums.gpu.schema import GPU
+# PORT = os.environ['GPU_PORT']
+# DOMAIN = os.environ['DOMAIN']
+# SERVERS = os.environ['SERVERS'].split(',')
+
+PORT = 42006
+DOMAIN = "csail.mit.edu"
+SERVERS = ["oreo", "mars", "twix", "milo", "ahoy"]
 
 
 class Settings(BaseSettings):
@@ -22,8 +34,44 @@ log = logging.getLogger("rich")
 q = GPUQuery.instance()
 settings = Settings()
 app = FastAPI(debug=settings.debug)
+templates = Jinja2Templates(directory="templates")
 
 
 @app.get("/gpu", response_model=List[GPU])
 def query_gpus():
     return q.run()
+
+
+async def fetch_gpus(
+    session: aiohttp.ClientSession, url: str
+) -> Union[List[GPU], Error]:
+    try:
+        async with session.get(url, timeout=5) as response:
+            response = await response.text()
+            return json.loads(response)
+    except client_exceptions.ClientConnectorError:
+        return Error.CONNECT
+    except asyncio.exceptions.TimeoutError:
+        return Error.TIMEOUT
+
+
+async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[List[GPU], Error]]:
+    tasks = []
+    async with aiohttp.ClientSession() as session:
+        for server, url in servers.items():
+            task = asyncio.create_task(fetch_gpus(session, url))
+            tasks.append(task)
+        responses = await asyncio.gather(*tasks)
+        # responses = [r.value if isinstance(r, Error) else r for r in responses]
+        return dict(zip(servers, responses))
+
+
+@app.get("/web", response_class=HTMLResponse)
+async def dashboard(request: Request, refresh: int = 0):
+    servers = {server: f"http://{server}.{DOMAIN}:{PORT}/gpu" for server in SERVERS}
+    responses = await fetch_all_gpus(servers)
+    return templates.TemplateResponse(
+        "index.html.j2",
+        dict(request=request, refresh=refresh, state=website_state(responses)),
+    )
+    # return await fetch_all_gpus(servers)
