@@ -6,13 +6,17 @@ from .schema import GPU, Process
 from ..util.lru import LRUDict
 from ..util.singleton import Singleton
 
+# All flags are under pynvml.smi.NVSMI_QUERY_GPU (very unintuitive names)
+QUERY = "memory.free, memory.total, memory.used, utilization.memory, utilization.gpu, temperature.gpu, compute-apps, count, gpu_name"
+
 
 @Singleton
 class GPUQuery:
     def __init__(self, cache: int = 256, maxduration: int = 86400):
         from pynvml.smi import nvidia_smi
+
         self.nv = nvidia_smi()
-        self.gpu_count = self.nv.DeviceQuery()["count"]
+        self.gpu_count = self.nv.DeviceQuery(QUERY)["count"]
         # Cache is purged after size limit or time limit
         self.pid_cache = LRUDict(maxsize=cache, maxduration=maxduration)
 
@@ -25,7 +29,7 @@ class GPUQuery:
         return self.pid_cache[pid]
 
     def run(self) -> List[GPU]:
-        query = self.nv.DeviceQuery()
+        query = self.nv.DeviceQuery(QUERY)
         gpus: List[GPU] = []
 
         for i in range(self.gpu_count):
