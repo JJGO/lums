@@ -20,7 +20,7 @@ def format_time(createtime):
     return str(datetime.timedelta(seconds=now - createtime))
 
 
-def server_status(server: str, server_response: Union[Error, List[GPU]]):
+def server_status(server: str, server_response: Union[Error, Any]):
     if isinstance(server_response, Error):
         status = {
             Error.CONNECT: "Down",
@@ -89,8 +89,9 @@ def website_state(servers):
     for server, response in servers.items():
         state = server_status(server, response)
         if state["status"] == "Up":
-            state["gpus"] = [gpu_summary(gpu) for gpu in response]
-            state["proc_summary"] = proc_summary(response).to_html(
+            state["metrics"] = response["metrics"]
+            state["gpus"] = [gpu_summary(gpu) for gpu in response["gpus"]]
+            state["proc_summary"] = proc_summary(response["gpus"]).to_html(
                 index=False, classes="table", border=0
             )
         states[server] = state

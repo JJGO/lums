@@ -12,15 +12,16 @@ from aiohttp import client_exceptions
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseSettings
+from pydantic import BaseSettings, BaseModel
 
 from gpu import GPU, Error, GPUQuery
 from presentation import website_state
+from netdata import netdata_metrics, NetdataMetrics
 
 PORT = os.environ["PORT"]
 DOMAIN = os.environ["DOMAIN"]
 SERVERS = os.environ["SERVERS"].split(",")
-TIMEOUT = int(os.environ.get('TIMEOUT', '5'))
+TIMEOUT = int(os.environ.get("TIMEOUT", "5"))
 
 
 class Settings(BaseSettings):
@@ -34,14 +35,22 @@ app = FastAPI(debug=settings.debug)
 templates = Jinja2Templates(directory="templates")
 
 
-@app.get("/gpu", response_model=List[GPU])
-def query_gpus():
-    return q.run()
+class APIResult(BaseModel):
+    gpus: List[GPU]
+    metrics: NetdataMetrics
+
+
+@app.get("/api", response_model=APIResult)
+def query_state():
+    return {
+        "gpus": q.run(),
+        "metrics": netdata_metrics(),
+    }
 
 
 async def fetch_gpus(
     session: aiohttp.ClientSession, url: str
-) -> Union[List[GPU], Error]:
+) -> Union[APIResult, Error]:
     try:
         async with session.get(url, timeout=TIMEOUT) as response:
             response = await response.text()
@@ -52,7 +61,7 @@ async def fetch_gpus(
         return Error.TIMEOUT
 
 
-async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[List[GPU], Error]]:
+async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[APIResult, Error]]:
     tasks = []
     async with aiohttp.ClientSession() as session:
         for server, url in servers.items():
@@ -65,7 +74,7 @@ async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[List[GPU], 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, refresh: int = 0):
-    servers = {server: f"http://{server}.{DOMAIN}:{PORT}/gpu" for server in SERVERS}
+    servers = {server: f"http://{server}.{DOMAIN}:{PORT}/api" for server in SERVERS}
     responses = await fetch_all_gpus(servers)
     return templates.TemplateResponse(
         "index.html.j2",
