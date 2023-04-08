@@ -65,17 +65,23 @@ def gpu_summary(gpu: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def proc_summary(server: List[GPU]) -> pd.DataFrame:
+    columns = ["GPU", "User", "Memory", "Time", "PID"]
+
     rows = []
     for i, gpu in enumerate(server):
         for p in gpu["processes"]:
             rows.append({"gpu": i, **p})
+
+    if len(rows) == 0:
+        return pd.DataFrame(columns=columns)
+
     df = pd.DataFrame.from_records(rows)
     df["GPU"] = df["gpu"]
     df["User"] = df["userid"]
     df["PID"] = df["pid"]
     df["Memory"] = df["used_memory"].map(format_memory)
     df["Time"] = df["createtime"].map(format_time)
-    return df[["GPU", "User", "Memory", "Time", "PID"]]
+    return df[columns]
 
 
 def website_state(servers):
