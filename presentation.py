@@ -92,7 +92,7 @@ def website_state(servers):
             state["metrics"] = response["metrics"]
             state["gpus"] = [gpu_summary(gpu) for gpu in response["gpus"]]
             state["proc_summary"] = proc_summary(response["gpus"]).to_html(
-                index=False, classes="table", border=0
+                index=False, classes="table table-striped", border=0
             )
         states[server] = state
     return states

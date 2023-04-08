@@ -68,7 +68,6 @@ async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[APIResult, 
             task = asyncio.create_task(fetch_gpus(session, url))
             tasks.append(task)
         responses = await asyncio.gather(*tasks)
-        # responses = [r.value if isinstance(r, Error) else r for r in responses]
         return dict(zip(servers, responses))
 
 
@@ -80,4 +79,3 @@ async def dashboard(request: Request, refresh: int = 0):
         "index.html.j2",
         dict(request=request, refresh=refresh, state=website_state(responses)),
     )
-    # return await fetch_all_gpus(servers)

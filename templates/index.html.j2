@@ -11,6 +11,7 @@
   <title>DDIG Monitor</title>
   <!-- <link rel="shortcut icon" href="/gpus/static/favicon.ico"> -->
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <style>
     .progress {
       margin: .5em;
@@ -102,7 +103,6 @@
 
 
 
-
   <!-- Page Content -->
   <div class="container">
 
@@ -133,10 +133,11 @@
               {% set g = loop.index-1 %}
 
               <tr>
+	      <td style="width:4%"> {{ g }} </td>
 
-              <td style="width:50%">
+              <td style="width:48%">
                  <div class="progress" title="Utilization">
-                   <div class="progress-bar {{ gpu['utilization_style'] }} progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="{{ gpu['utilization'] }}"
+                   <div class="progress-bar {{ gpu['utilization_style'] }}" role="progressbar" aria-valuenow="{{ gpu['utilization'] }}"
                    aria-valuemin="0" aria-valuemax="100" style="width:{{ gpu['utilization'] }}%">
                    <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
                     {{ gpu['utilization'] }}% ({{ gpu['n_procs']}})
@@ -145,9 +146,9 @@
                  </div>
               </td>
 
-              <td style="width:50%">
+              <td style="width:48%">
                  <div class="progress" title="Memory">
-                   <div class="progress-bar {{ gpu['memory_style'] }} progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="{{ mem_percent }}"
+                   <div class="progress-bar {{ gpu['memory_style'] }}" role="progressbar" aria-valuenow="{{ mem_percent }}"
                    aria-valuemin="0" aria-valuemax="100" style="width:{{ gpu['mem_percent'] }}%">
                    <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
                     {{ (gpu['memory_used'] / 1024) | round(1) }} / {{ (gpu['memory_total'] / 1024) | round(1) }} GB
@@ -164,6 +165,38 @@
       </div>
 
       <div class="col-md-6 text-center">
+
+      {% set metrics = host_state['metrics']%}
+      <table style="width: 100%; margin:auto">
+              <tr>
+	      <td style="width:4%"> <i class="fa-solid fa-microchip"></i> </td>
+
+              <td style="width:46%">
+                 <div class="progress" title="CPU">
+                   <div class="progress-bar bg-info" role="progressbar" aria-valuenow="{{ metrics['cpu'] }}"
+                   aria-valuemin="0" aria-valuemax="100" style="width:{{ metrics['cpu'] }}%">
+                   <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
+                    {{ metrics['cpu'] }}%
+                    </span>
+                   </div>
+                 </div>
+              </td>
+	      <td style="width:4%"> <i class="fa-solid fa-memory"></i> </td>
+
+              <td style="width:46%">
+                 <div class="progress" title="RAM">
+                   <div class="progress-bar bg-info" role="progressbar" aria-valuenow="{{ metrics['ram'] }}"
+                   aria-valuemin="0" aria-valuemax="100" style="width:{{ metrics['ram'] }}%">
+                   <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
+                    {{ metrics['ram'] }} %
+                    </span>
+                   </div>
+                 </div>
+              </td>
+
+              </tr>
+
+          </table>
 
       {{ host_state['proc_summary'] | safe }}
 
