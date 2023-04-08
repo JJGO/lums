@@ -166,6 +166,7 @@
 
       <div class="col-md-6 text-center">
 
+      {% if status == 'Up' %}
       {% set metrics = host_state['metrics']%}
       <table style="width: 100%; margin:auto">
               <tr>
@@ -175,7 +176,7 @@
                  <div class="progress" title="CPU">
                    <div class="progress-bar bg-info" role="progressbar" aria-valuenow="{{ metrics['cpu'] }}"
                    aria-valuemin="0" aria-valuemax="100" style="width:{{ metrics['cpu'] }}%">
-                   <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
+                   <span class="justify-content-center d-flex position-absolute" style="width:45%;margin:auto">
                     {{ metrics['cpu'] }}%
                     </span>
                    </div>
@@ -187,7 +188,7 @@
                  <div class="progress" title="RAM">
                    <div class="progress-bar bg-info" role="progressbar" aria-valuenow="{{ metrics['ram'] }}"
                    aria-valuemin="0" aria-valuemax="100" style="width:{{ metrics['ram'] }}%">
-                   <span class="justify-content-center d-flex position-absolute" style="width:50%;margin:auto">
+                   <span class="justify-content-center d-flex position-absolute" style="width:45%;margin:auto">
                     {{ metrics['ram'] }} %
                     </span>
                    </div>
@@ -200,12 +201,15 @@
 
       {{ host_state['proc_summary'] | safe }}
 
+      {% endif %}
+
       </div>
 
     </div>
 
     <div style='margin:2em'>
     </div>
+    <hr>
 
     {% endfor %}
 
