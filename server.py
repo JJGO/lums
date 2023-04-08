@@ -63,7 +63,7 @@ async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[List[GPU], 
         return dict(zip(servers, responses))
 
 
-@app.get("/web", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, refresh: int = 0):
     servers = {server: f"http://{server}.{DOMAIN}:{PORT}/gpu" for server in SERVERS}
     responses = await fetch_all_gpus(servers)
