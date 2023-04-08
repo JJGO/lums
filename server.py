@@ -20,7 +20,7 @@ from presentation import website_state
 PORT = os.environ["PORT"]
 DOMAIN = os.environ["DOMAIN"]
 SERVERS = os.environ["SERVERS"].split(",")
-SERVERS = int(os.environ.get('TIMEOUT', '5'))
+TIMEOUT = int(os.environ.get('TIMEOUT', '5'))
 
 
 class Settings(BaseSettings):
