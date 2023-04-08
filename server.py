@@ -17,9 +17,10 @@ from pydantic import BaseSettings
 from gpu import GPU, Error, GPUQuery
 from presentation import website_state
 
-PORT = os.environ["GPU_PORT"]
+PORT = os.environ["PORT"]
 DOMAIN = os.environ["DOMAIN"]
 SERVERS = os.environ["SERVERS"].split(",")
+SERVERS = int(os.environ.get('TIMEOUT', '5'))
 
 
 class Settings(BaseSettings):
@@ -42,7 +43,7 @@ async def fetch_gpus(
     session: aiohttp.ClientSession, url: str
 ) -> Union[List[GPU], Error]:
     try:
-        async with session.get(url, timeout=5) as response:
+        async with session.get(url, timeout=TIMEOUT) as response:
             response = await response.text()
             return json.loads(response)
     except client_exceptions.ClientConnectorError:
