@@ -1,7 +1,8 @@
 aiohttp
 fastapi
 jinja2
-pynvml
-uvicorn
-psutil
 pandas
+psutil
+pynvml
+requests
+uvicorn
