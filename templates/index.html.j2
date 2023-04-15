@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="">
   <meta name="author" content="">
+  <meta name="format-detection" content="telephone=no">
 
   <title>DDIG Monitor</title>
   <!-- <link rel="shortcut icon" href="/gpus/static/favicon.ico"> -->
@@ -170,7 +171,7 @@
       {% set metrics = host_state['metrics']%}
       <table style="width: 100%; margin:auto">
               <tr>
-	      <td style="width:4%"> <i class="fa-solid fa-microchip"></i> </td>
+	      <td style="width:4%"> <span title="CPU"><i class="fa-solid fa-microchip"></i></span> </td>
 
               <td style="width:46%">
                  <div class="progress" title="CPU">
@@ -182,7 +183,7 @@
                    </div>
                  </div>
               </td>
-	      <td style="width:4%"> <i class="fa-solid fa-memory"></i> </td>
+	      <td style="width:4%"> <span title="RAM"><i class="fa-solid fa-memory"></i></span> </td>
 
               <td style="width:46%">
                  <div class="progress" title="RAM">

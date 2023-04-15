@@ -14,6 +14,8 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseSettings, BaseModel
 
+import requests, threading, time
+
 from gpu import GPU, Error, GPUQuery
 from presentation import website_state
 from netdata import netdata_metrics, NetdataMetrics
@@ -22,10 +24,18 @@ PORT = os.environ["PORT"]
 DOMAIN = os.environ["DOMAIN"]
 SERVERS = os.environ["SERVERS"].split(",")
 TIMEOUT = int(os.environ.get("TIMEOUT", "5"))
+HISTORY_INTERVAL = int(os.environ.get("HISTORY_INTERVAL", 60))
 
 
 class Settings(BaseSettings):
     debug: bool = False
+
+
+def refresh_api():
+    while True:
+        response = requests.get(f"http://localhost:{PORT}/api")
+        # process the response here
+        time.sleep(HISTORY_INTERVAL)
 
 
 log = logging.getLogger("rich")
@@ -33,6 +43,10 @@ q = GPUQuery.instance()
 settings = Settings()
 app = FastAPI(debug=settings.debug)
 templates = Jinja2Templates(directory="templates")
+
+if HISTORY_INTERVAL > 0:
+    t = threading.Thread(target=refresh_api)
+    t.start()
 
 
 class APIResult(BaseModel):

@@ -1,5 +1,8 @@
+from collections import deque
 from enum import Enum
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 
 import psutil
 from pydantic import BaseModel
@@ -9,6 +12,8 @@ from helpers import LRUDict, Singleton
 # All flags are under pynvml.smi.NVSMI_QUERY_GPU (very unintuitive names)
 QUERY = "memory.free, memory.total, memory.used, utilization.memory, utilization.gpu, temperature.gpu, compute-apps, count, gpu_name"
 
+HISTORY_SIZE = 20
+
 
 class Process(BaseModel):
     pid: int
@@ -16,6 +21,8 @@ class Process(BaseModel):
     used_memory: int
     userid: str
     createtime: int
+    is_jupyter: bool
+    mean_utilization: float
 
 
 class GPU(BaseModel):
@@ -31,13 +38,14 @@ class GPU(BaseModel):
 
 @Singleton
 class GPUQuery:
-    def __init__(self, cache: int = 256, maxduration: int = 86400):
+    def __init__(self):  # , cache: int = 256, maxduration: int = 86400):
         from pynvml.smi import nvidia_smi
 
         self.nv = nvidia_smi()
         self.gpu_count = self.nv.DeviceQuery(QUERY)["count"]
         # Cache is purged after size limit or time limit
-        self.pid_cache = LRUDict(maxsize=cache, maxduration=maxduration)
+        # self.pid_cache = LRUDict(maxsize=cache, maxduration=maxduration)
+        self.gpu_utilization_history = [deque() for _ in range(self.gpu_count)]
 
     def pid_owner_time(self, pid: int) -> Tuple[str, str]:
         if pid not in self.pid_cache:
@@ -47,19 +55,35 @@ class GPUQuery:
             self.pid_cache[pid] = (userid, create_time)
         return self.pid_cache[pid]
 
+    def pid_properties(self, pid: int) -> Dict[str, Any]:
+        process = psutil.Process(pid)
+        return {
+            "userid": process.username(),
+            "createtime": int(process.create_time()),
+            "is_jupyter": "ipykernel_launcher" in process.cmdline(),
+            # "status": process.status(),
+        }
+
     def run(self) -> List[GPU]:
         query = self.nv.DeviceQuery(QUERY)
         gpus: List[GPU] = []
 
         for i in range(self.gpu_count):
             gpu = query["gpu"][i]
+
+            utilization_history = self.gpu_utilization_history[i]
+            current_utilization = gpu["utilization"]["gpu_util"]
+            utilization_history.append(current_utilization)
+            if len(utilization_history) > HISTORY_SIZE:
+                utilization_history.popleft()
+
             if gpu["processes"] is None:
                 gpu["processes"] = []
             for p in gpu["processes"]:
-                uid, create_time = self.pid_owner_time(p["pid"])
-                p["userid"] = uid
-                p["createtime"] = int(create_time)
+                p.update(self.pid_properties(p["pid"]))
                 del p["process_name"]
+
+                p["mean_utilization"] = np.mean(utilization_history)
 
             processes = [Process(**p) for p in gpu["processes"]]
 

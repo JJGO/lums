@@ -22,10 +22,7 @@ def format_time(createtime):
 
 def server_status(server: str, server_response: Union[Error, Any]):
     if isinstance(server_response, Error):
-        status = {
-            Error.CONNECT: "Down",
-            Error.TIMEOUT: "Timeout",
-        }[server_response]
+        status = {Error.CONNECT: "Down", Error.TIMEOUT: "Timeout",}[server_response]
     else:
         last_contact[server] = int(time.time())
         status = "Up"
@@ -64,8 +61,19 @@ def gpu_summary(gpu: Dict[str, Any]) -> Dict[str, Any]:
     return gpu
 
 
+def icons(row):
+    icons = ""
+    if row["is_jupyter"]:
+        icons += "📔 "
+    if row["mean_utilization"] < 1.0:
+        icons += "💤"
+    # elif row["mean_utilization"] < 10.0:
+    #     icons += "🐌"
+    return icons
+
+
 def proc_summary(server: List[GPU]) -> pd.DataFrame:
-    columns = ["GPU", "User", "Memory", "Time", "PID"]
+    columns = ["GPU", "User", "Memory", "Time", "PID", "Icons"]
 
     rows = []
     for i, gpu in enumerate(server):
@@ -81,6 +89,7 @@ def proc_summary(server: List[GPU]) -> pd.DataFrame:
     df["PID"] = df["pid"]
     df["Memory"] = df["used_memory"].map(format_memory)
     df["Time"] = df["createtime"].map(format_time)
+    df["Icons"] = df.apply(icons, axis=1)
     return df[columns]
 
 
@@ -91,8 +100,16 @@ def website_state(servers):
         if state["status"] == "Up":
             state["metrics"] = response["metrics"]
             state["gpus"] = [gpu_summary(gpu) for gpu in response["gpus"]]
-            state["proc_summary"] = proc_summary(response["gpus"]).to_html(
-                index=False, classes="table table-striped", border=0
+            state["proc_summary"] = (
+                proc_summary(response["gpus"])
+                .to_html(index=False, classes="table table-striped", border=0)
+                .replace("Icons", "")
+                .replace(
+                    "📔",
+                    '<span title="Jupyter Notebook"><i class="fa-solid fa-book"></i></span>',
+                )
+                .replace("💤", '<span title="Idle Process">💤</span>')
+                .replace("🐌", '<span title="Mean GPU Util below 10%">🐌</span>')
             )
         states[server] = state
     return states
