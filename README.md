@@ -6,7 +6,8 @@ Lums monitors shared computing infrastructure and presents state in a neat and c
 
 ## Installation
 
-You can install `lums` in two ways:
+You can install `lums` by cloning it and installing dependencies
+<!-- in two ways:
 
 - **With pip**:
 
@@ -14,7 +15,7 @@ You can install `lums` in two ways:
 pip install git+https://github.com/JJGO/lums.git
 ```
 
-- **Manually**: Cloning it and installing dependencies
+- **Manually**: --> 
 
 ```shell
 git clone https://github.com/JJGO/lums
