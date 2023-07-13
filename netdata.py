@@ -17,7 +17,7 @@ class NetdataMetrics(BaseModel):
 
 def netdata_metrics(interval_seconds: int = 60) -> NetdataMetrics:
     options = {
-        "chart": "system.ram,system.load,system.net,system.io",
+        "chart": "system.cpu,system.ram,system.load,system.net,system.io",
         "after": f"-{interval_seconds:d}",
         "points": 1,
         "group": "average",
@@ -35,7 +35,7 @@ def netdata_metrics(interval_seconds: int = 60) -> NetdataMetrics:
     }
     # from checking the api/v1/charts, we know that system.io and system.net are in Kb/s
     return {
-        "cpu": round(metrics["system.load.load1"] / num_cores * 100, 1),
+        "cpu": round(sum(v for k, v in metrics.items() if k.startswith('system.cpu.')), 1),
         "ram": round(metrics["system.ram.used"] / total_memory_mib * 100, 1),
         "network_down": round(metrics["system.net.received"] / 1024, 2),
         "network_up": round(-metrics["system.net.sent"] / 1024, 2),
