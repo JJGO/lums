@@ -20,7 +20,7 @@ from pydantic import BaseModel, BaseSettings
 from gpu import GPU, Error, GPUQuery
 from netdata import NetdataMetrics, netdata_metrics
 from presentation import website_state
-from storage import Filesystem, get_filesystems
+from storage import Filesystem, get_filesystems, storage_groups
 
 PORT = os.environ["PORT"]
 DOMAIN = os.environ["DOMAIN"]
@@ -105,5 +105,6 @@ async def fs_dashboard(request: Request):
     servers = {server: f"http://{server}.{DOMAIN}:{PORT}/fs" for server in SERVERS}
     responses = await fetch_all(servers)
     return templates.TemplateResponse(
-        "data.html.j2", dict(request=request, state=website_state(responses)),
+        "data.html.j2",
+        dict(request=request, storage_groups=storage_groups(responses)),
     )
