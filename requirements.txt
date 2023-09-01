@@ -6,3 +6,4 @@ psutil
 pynvml
 requests
 uvicorn
+jc

@@ -5,20 +5,22 @@ import asyncio
 import json
 import logging
 import os
+import threading
+import time
 from typing import Dict, List, Optional, Union
 
 import aiohttp
+import requests
 from aiohttp import client_exceptions
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseSettings, BaseModel
-
-import requests, threading, time
+from pydantic import BaseModel, BaseSettings
 
 from gpu import GPU, Error, GPUQuery
+from netdata import NetdataMetrics, netdata_metrics
 from presentation import website_state
-from netdata import netdata_metrics, NetdataMetrics
+from storage import Filesystem, get_filesystems
 
 PORT = os.environ["PORT"]
 DOMAIN = os.environ["DOMAIN"]
@@ -62,9 +64,12 @@ def query_state():
     }
 
 
-async def fetch_gpus(
-    session: aiohttp.ClientSession, url: str
-) -> Union[APIResult, Error]:
+@app.get("/fs", response_model=List[Filesystem])
+def query_fs():
+    return get_filesystems()
+
+
+async def fetch(session: aiohttp.ClientSession, url: str) -> Union[APIResult, Error]:
     try:
         async with session.get(url, timeout=TIMEOUT) as response:
             response = await response.text()
@@ -75,11 +80,11 @@ async def fetch_gpus(
         return Error.TIMEOUT
 
 
-async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[APIResult, Error]]:
+async def fetch_all(servers: Dict[str, str]) -> Dict[str, Union[APIResult, Error]]:
     tasks = []
     async with aiohttp.ClientSession() as session:
         for server, url in servers.items():
-            task = asyncio.create_task(fetch_gpus(session, url))
+            task = asyncio.create_task(fetch(session, url))
             tasks.append(task)
         responses = await asyncio.gather(*tasks)
         return dict(zip(servers, responses))
@@ -88,8 +93,17 @@ async def fetch_all_gpus(servers: Dict[str, str]) -> Dict[str, Union[APIResult, 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, refresh: int = 0):
     servers = {server: f"http://{server}.{DOMAIN}:{PORT}/api" for server in SERVERS}
-    responses = await fetch_all_gpus(servers)
+    responses = await fetch_all(servers)
     return templates.TemplateResponse(
         "index.html.j2",
         dict(request=request, refresh=refresh, state=website_state(responses)),
+    )
+
+
+@app.get("/data", response_class=HTMLResponse)
+async def fs_dashboard(request: Request):
+    servers = {server: f"http://{server}.{DOMAIN}:{PORT}/fs" for server in SERVERS}
+    responses = await fetch_all(servers)
+    return templates.TemplateResponse(
+        "data.html.j2", dict(request=request, state=website_state(responses)),
     )
