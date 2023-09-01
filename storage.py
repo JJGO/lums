@@ -24,5 +24,5 @@ def get_filesystems() -> List[Filesystem]:
         for name in ("1k_blocks", "filesystem", "use_percent"):
             filesystem.pop(name)
         filesystem["name"] = filesystem.pop("mounted_on")
-        filtered_filesystems.append(Filesystem(filesystem))
+        filtered_filesystems.append(Filesystem(**filesystem))
     return filtered_filesystems
